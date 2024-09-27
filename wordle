@@ -1,0 +1,340 @@
+from google.colab import output
+import random
+
+
+def black_on_gray(text):
+    """Return text coloured black, with gray background. Remaining letters."""
+
+    return "\033[0;30;47m"+text+"\033[0;0;0m"
+
+
+def white_on_black(text):
+    """Return text coloured white with black background. Not in word."""
+
+    return "\033[5;37;40m"+text+"\033[0;0;0m"
+
+
+def white_on_green(text):
+    """Return text coloured white with green background. Correct Position."""
+
+    return "\033[0;37;42m"+text+"\033[0;0;0m"
+
+def white_on_yellow(text):
+    """Return text coloured white with yellow background. In word, wrong position."""
+
+    return "\033[0;37;43m"+text+"\033[0;0;0m"
+
+
+def get_word(WORDS):
+    """Return a word randomly chosen from word_list."""
+
+    return random.choice(WORDS).upper()
+
+
+def help_bar_display():
+  """When called, print the Wordle tutorial."""
+
+  print("\nHOW TO PLAY")
+  print(" ○ Guess the secrect word in 6 tries")
+  print(" ○ Colours indicate how close your guess is to the secret word\n")
+  print(white_on_green("W"), "E A R Y means that the secret word has a 'W' in that spot")
+  print("P R", white_on_yellow("I"), "N T means that the secret word has an 'I', but in a different spot")
+  print("V A G", white_on_black("U"), "E means that there isn't a 'U' in the secret word\n")
+
+
+def get_guess(msg: str) -> str:
+  """Print msg and return a guess given by the user in all caps."""
+
+  guess = input(msg)
+  return guess.upper()
+
+
+def check_help(guess: str, grid: [str], alphabet: [str]) -> str:
+  """Check to see if the user entered 'help' as their guess. 
+  Clear the previous output, call help_bar_display, and restore the previous grid and alphabet. 
+  Ask the user for another guess, return guess."""
+
+  if guess == "HELP":
+    output.clear()
+    help_bar_display()
+    exit = input("Enter anything to exit help bar: ")
+
+    if exit != "":
+      output.clear()
+    else:
+      print()
+
+    print_grid(grid)
+    print_alphabet(alphabet)
+
+    guess = get_guess("Enter a 5 letter word: ")
+  return guess
+
+
+def validate_guess(guess: str, TOTAL_WORDS:[str]) -> str:
+  """Check that guess is a valid in TOTAL_WORDS, explain why guess is invalid.
+  Get a new guess inputed from the user until a valid guess is entered. Return guess.
+  
+  >>> validate_guess("crane", ["stump", "crane", "adieu"])
+  crane
+  >>> validate_guess("no", ["stump", "crane", "adieu"])
+  Word is too short
+  Enter a 5 letter word: """
+
+  while guess not in TOTAL_WORDS:
+    if len(guess) < 5:
+      print("Word is too short.")
+
+    elif len(guess) > 5:
+      print("Word is too long.")
+
+    else:
+      print("Word is not in list.")
+
+    guess = get_guess("Enter a 5 letter word: ")
+  return guess
+
+
+def letter_list(word, guess) -> [str]:
+  """Separate the individual letters in word. Compare letters in guess and word,
+  place each index of guess into its appropriate list, remove the index from the word list.
+  Return the list of letters.
+  
+  >>> letter_list("CRANE", "BLEND")
+  [["C", "R", "A"], ["", "", "", "N", ""], ["", "", "E", "", ""], ["B", "L", "", "", "D"]]"""
+
+  letters = [[], ["", "", "", "", ""], ["", "", "", "", ""], ["", "", "", "", ""]]
+
+  for i in range(5):
+    letters[0].append(word[i])
+
+  for j in range(5):
+    if guess[j] == letters[0][j]:
+      letters[1][j] = guess[j]
+      letters[0][j] = ""
+
+  for k in range(5):
+    l = 0
+    while l<5:
+      if guess[k] == letters[0][l]:
+        letters[2][k] = guess[k]
+        letters[0][l] = ""
+        l = 5
+      l += 1
+
+  for m in range(5):
+    if guess[m] not in letters[0] and guess[m] != letters[1][m] and guess[m] != letters[2][m]:
+      letters[3][m] = guess[m]
+  return letters
+
+
+def correct(letters: [str]) -> [str]:
+  """Isoclate and return correct list from letters."""
+  
+  green = letters[1]
+  return green
+
+
+def wrong_place(letters: [str]) -> [str]:
+  """Iscolate and return the list of wrong placement from letters."""
+
+  yellow = letters[2]
+  return yellow
+
+
+def not_in_word(letters: [str]) -> [str]:
+  """Iscolate and return the list of not in word from letters."""
+
+  black = letters[3]
+  return black
+
+
+def current_round(letters: [str]) -> [str]:
+  """Return a new list with the letters of the guess with the appropriate colours."""
+
+  recent_guess = []
+  green = correct(letters)
+  yellow = wrong_place(letters)
+  black = not_in_word(letters)
+
+  for i in range(5):
+    if green[i] != "":
+      recent_guess.append(white_on_green(green[i]))
+
+    elif yellow[i] != "":
+      recent_guess.append(white_on_yellow(yellow[i]))
+
+    else:
+      recent_guess.append(white_on_black(black[i]))
+  return recent_guess
+
+
+def update_alphabet(alphabet: [str], letters: [str]) -> [str]:
+  """Return the updated alphebet with appropriate colours based on the new guess in letters."""
+
+  a = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' ]
+  green = correct(letters)
+  yellow = wrong_place(letters)
+  black = not_in_word(letters)
+
+  for i in range(26):
+    if a[i] in green:
+      alphabet[i] = white_on_green(a[i])
+
+    elif a[i] in yellow:
+      alphabet[i] = white_on_yellow(a[i])
+
+    elif a[i] in black:
+      alphabet[i] = white_on_black(a[i])
+
+    else:
+      alphabet[i] = black_on_gray(alphabet[i])
+  return alphabet
+
+
+def print_alphabet(alphabet: [str]):
+  """Print the alphabet."""
+
+  for i in range(26):
+    print(alphabet[i], end=" ")
+  print("\n")
+
+
+def update_grid(grid: [str], letters: [str], n: int) -> [str]:
+  """Change the grid of the nth round from the recent guess in letters. 
+  Return the updated grid."""
+
+  recent_guess = current_round(letters)
+  grid[n] = recent_guess
+  return grid
+
+
+def print_grid(grid: [str]):
+  """Print the grid."""
+
+  for i in range(6):
+    for j in range(5):
+      print(grid[i][j], end=" ")
+    print()
+  print()
+
+
+def get_stats(stats: [int], n: int) -> [int]:
+  """In stats, update the number of wins that occured in n guesses. 
+  Return the updates stats.
+  
+  >>> get_stats([0, 0, 2, 3, 1, 0], 5)
+  [0, 0, 2, 3, 2, 0]"""
+
+  if n == 7:
+    return stats
+  else:
+    stats[n-1] += 1
+  return stats
+
+
+def print_stats(stats: [int], n: int):
+  """Print stats."""
+
+  for i in range(6):
+    if i == n-1:
+      print(white_on_green(str(i+1)), end=" ")
+      for j in range(2*stats[i]):
+        print(white_on_green(" "), end="")
+      print(white_on_green(str(stats[i])))
+
+    else:
+      print(black_on_gray(str(i+1)), end=" ")
+      for j in range(2*stats[i]):
+        print(black_on_gray(" "), end="")
+      print(black_on_gray(str(stats[i])))
+  print()
+
+
+def get_wins(wins: [int], n: int) -> [int]:
+  """Return the ratio of wins to games played, where n is the number of guess to determine a win.
+  
+  >>> get_wins([5, 6], 7)
+  [5, 7]"""
+
+  if n < 7:
+    wins[0] += 1
+  wins[1] += 1
+  print("Games played: {}  Win rate: {:.1f}%\n".format(wins[1], (wins[0]/wins[1])*100))
+  return wins
+
+
+def get_streak(streaks:[int], n: int) -> [int]:
+  """Return the updated winning streaks, n determines if there is a win and the streak continues.
+  
+  >>> get_streak([0, 2, 3, 0], 3)
+  [0, 2, 3, 1]"""
+
+  if n<7:
+    streaks[-1] += 1
+  else:
+    streaks.append(0)
+  return streaks
+
+
+def print_streaks(streaks: [int]):
+  """Print the longest streak in streaks and the most recent streak in streaks.""" 
+
+  current_streak = streaks[-1]
+  streaks.sort()
+  print("Longest streak: {}  Current streak: {}\n".format(streaks[-1], current_streak))
+
+
+def set_up(grid: [str], alphabet: [str]) -> [str]:
+  """Print the blank grid and alphabet with only unguessed letters, return alphabet."""
+
+  print_grid(grid)
+  for i in range(26):
+    alphabet[i] = black_on_gray(alphabet[i])
+  print_alphabet(alphabet)
+  return alphabet
+
+
+def main():
+  print("Welcome to Wordle!")
+  play = "y"
+  stats = [0, 0, 0, 0, 0, 0]
+  wins = [0, 0]
+  streaks = [0]
+
+  while play == "y":
+    word = get_word(WORDLE_WORDS)
+    guess = ""
+    num_guess = 0
+    grid = [["_", "_", "_", "_", "_"],["_", "_", "_", "_", "_"], ["_", "_", "_", "_", "_"], ["_", "_", "_", "_", "_"], ["_", "_", "_", "_", "_"], ["_", "_", "_", "_", "_"] ]
+    alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' ]
+    set_up(grid, alphabet)
+
+    while guess != word and num_guess<6:
+      print("\nEnter 'help' at anytime to get a tutorial of the game.")
+      guess = get_guess("Enter a 5 letter word: ")
+      guess = check_help(guess, grid, alphabet)
+      guess = validate_guess(guess, TOTAL_WORDS)
+      output.clear()
+      letters = letter_list(word, guess)
+      alphabet = update_alphabet(alphabet, letters)
+      grid = update_grid(grid, letters, num_guess)
+      print_grid(grid)
+      print_alphabet(alphabet)
+      num_guess += 1
+
+    if word != guess:
+      print("The word was {}\n". format(word))
+      num_guess += 1
+    else:
+      print("Congratulations!\n")
+
+    wins = get_wins(wins, num_guess)
+    streaks = get_streak(streaks, num_guess)
+    print_streaks(streaks)
+    stats = get_stats(stats, num_guess)
+    print_stats(stats, num_guess)
+    
+    play = input("Would you like to keep playing? Enter 'y': ")
+    if play == "y":
+      output.clear()
